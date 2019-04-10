@@ -1,8 +1,8 @@
 ---
 title: "Temperatura JP x CG"
 output:
-    html_document:
-    df_print: paged
+html_document:
+df_print: paged
 theme: sandstone
 ---
 
@@ -10,39 +10,81 @@ theme: sandstone
 library(tidyverse)
 library(here)
 library(lubridate)
-library(ggbeeswarm)
+#library(ggbeeswarm)
 theme_set(theme_bw())
 ```
 
 ```{r read}
-climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), 
-                  col_types = "cTdddddd")
-
-glimpse(climas)
+climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), col_types = "cTdddddd")
 ```
 
 ## Temperatura
 
 ### Onde é mais quente?
 
+Para determinar qual das duas cidades é mais quente, podemos utilizar diferentes formas de comparação. Aqui, escolhemos comparar as temperaturas médias pois o valor da temperatura máxima pode não ser representativo da temperatura geral na semana, uma vez que existe a possibilidade de que a temperatura ocorra apenas por um curto período de tempo.
 
-### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?  
+```{r}
+climas %>%
+    ggplot(aes(x = tmedia, fill = cidade)) +
+    geom_density(alpha = .6) +
+    labs(title = "Temperaturas Médias em Campina Grande e João Pessoa", y = "Proporção", x = "Temperatura Média")
+
+```
+
+A visualização nos mostra, que as temperaturas mais altas acontecem mais frequentemente (algumas temperaturas exclusivamente!) em João Pessoa.
 
 
-### Quais os meses mais quentes e mais frios? 
+### Quais os meses mais quentes e mais frios?
+
+Iremos agora construir boxplots para nos auxiliar a responder esta pergunta. Na visualização a seguir, cada boxplot representa a dispersão dos valores de temperatura média para cada mês do ano.
+
+```{r}
+climas <- climas %>% 
+    mutate(mes = as.factor(month(semana)))
 
 
-### Qual foi o São João  mais frio de CG que está nos nossos dados?
+climas %>% 
+    ggplot(aes(x = mes, y = tmedia)) +
+    geom_boxplot(aes(fill = cidade)) +
+    labs(title = "Temperaturas Médias por Mês", y = "Temperatura Média", x = "Mês")
+    
+```
 
-
+Portanto, Março parece ser o mês mais quente do ano, enquanto Julho parece ser o mais frio.
+Também é interessante observar, que esta visualização reforça nossa resposta da primeira pergunta, uma vez que em todos os mêses a temperatura média é maior em João Pessoa.
 
 ## Chuva
 
-### Quanto chove por semana em JP e CG?
+### A distribuição é diferente em meses específicos?
 
-Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
+Uma visualização semelhante a anterior pode nos ajudar a comparar a distribuição da chuva entre os diferentes meses.
+
+```{r}
+climas <- climas %>% 
+    mutate(mes = as.factor(month(semana)))
+
+
+climas %>% 
+    ggplot(aes(x = mes, y = chuva)) +
+    geom_boxplot(aes(fill = cidade)) +
+    labs(title = "Distribuição da Intensidade das Chuvas por Mês", y = "Índice Pluviométrico", x = "Mês")
+```
+
+A distribuição é bem mais dispersa à medida que nos aproximamos da metade do ano, atingindo picos altíssimos em Julho, podemos perceber esta tendência pelo tamanho mais alongado das caixas. A distribuição se torna mais concentrada no início e final  do ano.
 
 ### No geral, onde chove mais?
 
-### A distribuição é diferente em meses específicos? 
+A última visualização consegue nos dar uma intuição de qual será o resultado desta pergunta, porém podemos projetar uma parecida à primeira deste relatório, e ter uma visão geral dos índices pluviométricos nas duas cidades.
 
+```{r}
+climas %>%
+    ggplot(aes(x = chuva, fill = cidade)) +
+    geom_density(alpha = .6) +
+    scale_x_log10() +
+    labs(title = "Temperaturas Médias em Campina Grande e João Pessoa", y = "Proporção", x = "Índice Pluviométrico")
+
+```
+
+Precisamos alterar a visualização do eixo x pois a visualização estava muito concentrada em valores pequenos, para resolver este problema, utilizamos uma escala logaritmica pois esta dá mais ênfase às pequenas grandezas.
+Confirmamos então nossa suspeita. Os maiores índices pluviométricos de fato acontecem na cidade de João Pessoa.
